@@ -25,25 +25,27 @@ def unconfirmed():
         return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
 
-
+#登录用户
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    #创建一个LoginForm对象
     form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user is not None and user.verify_password(form.password.data):
-            login_user(user, form.remember_me.data)
+    if form.validate_on_submit():#validate_on_submit()函数验证表单数据，尝试用户登录
+
+        user = User.query.filter_by(email=form.email.data).first()  #视图函数首先使用表单中填写的 email 从数据库中加载用户
+        if user is not None and user.verify_password(form.password.data): #如果电子邮 件地址对应的用户存在，再调用用户对象的 verify_password() 方法，其参数是表单中填 写的密码
+            login_user(user, form.remember_me.data)  #密码正确，则调用 Flask-Login 中的 login_user() 函数，在用户会话中把 用户标记为已登录。
             return redirect(request.args.get('next') or url_for('main.index'))
         flash('Invalid username or password.')
-    return render_template('auth/login.html', form=form)
+    return render_template('auth/login.html', form=form)  #当请 求类型是 GET 时，视图函数直接渲染模板
 
-
+#登出用户
 @auth.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    flash('You have been logged out.')
-    return redirect(url_for('main.index'))
+    logout_user() #调用 Flask-Login 中的 logout_user() 函数，删除并重设用户 会话
+    flash('You have been logged out.')  #显示一个 Flash 消息，确认这次操作，
+    return redirect(url_for('main.index'))  #再重定向到首页
 
 
 @auth.route('/register', methods=['GET', 'POST'])
