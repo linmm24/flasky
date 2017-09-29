@@ -4,15 +4,17 @@ from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
 from ..models import User
 
-
+#登录表单 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[Required(), Length(1, 64),
                                              Email()])
+    #。PasswordField 类表 示属性为 type="password" 的 <input> 元素
     password = PasswordField('Password', validators=[Required()])
+    #。BooleanField 类表示复选框
     remember_me = BooleanField('Keep me logged in')
     submit = SubmitField('Log In')
 
-#注册新用户
+#注册新用户表单
 class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[Required(), Length(1, 64),
                                            Email()])
@@ -25,6 +27,7 @@ class RegistrationForm(FlaskForm):
     password2 = PasswordField('Confirm password', validators=[Required()])
     submit = SubmitField('Register')
 
+    #validate_开头后面跟着字段名的方法，这个方法就和常规的验证方法一起调用
     def validate_email(self, field):
         if User.query.filter_by(email=field.data).first():
             raise ValidationError('Email already registered.')

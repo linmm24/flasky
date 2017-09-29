@@ -39,7 +39,7 @@ def login():
         flash('Invalid username or password.')
     return render_template('auth/login.html', form=form)  #当请 求类型是 GET 时，视图函数直接渲染模板
 
-#登出用户
+#登出用户路由
 @auth.route('/logout')
 @login_required
 def logout():
@@ -47,7 +47,7 @@ def logout():
     flash('You have been logged out.')  #显示一个 Flash 消息，确认这次操作，
     return redirect(url_for('main.index'))  #再重定向到首页
 
-
+#用户注册路由
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()

@@ -6,12 +6,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
 
+
+#初始化 Flask-Login 
+
 bootstrap = Bootstrap()
 mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
 
 login_manager = LoginManager()
+#设为 'strong' 时，Flask-Login 会记录客户端 IP 地址和浏览器的用户代理信息，如果发现异动就登出用户
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'auth.login'
 

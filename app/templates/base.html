@@ -35,6 +35,7 @@
                     </ul>
                 </li>
                 {% else %}
+                <!--根据当前用户的登录状态分别显示 “Sign In”或“Sign Out”链接-->
                 <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
                 {% endif %}
             </ul>

@@ -5,11 +5,45 @@ from flask_login import UserMixin
 from . import db, login_manager
 
 
+#权限常量
+class Permission:
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLES = 0x04
+    MODERATE_COMMENTS = 0x08
+    ADMINISTER = 0x80
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
+    #只有一个角色的default字段要设为true，其他为false，用户注册时，其角色会被设为默认角色
+    default=db.Column(db.Boolean,default=False,index=True)
+    #表示位标志，各操作都对应一个位位置
+    permissions=db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
+
+    #在数据库中创建角色
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.FOLLOW |
+                     Permission.COMMENT |
+                     Permission.WRITE_ARTICLES, True),
+            'Moderator': (Permission.FOLLOW |
+                          Permission.COMMENT |
+                          Permission.WRITE_ARTICLES |
+                          Permission.MODERATE_COMMENTS, False),
+            'Administrator': (0xff, False)
+        }
+        for r in roles:
+            role = Role.query.filter_by(name=r).first()
+            if role is None:
+                role = Role(name=r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -24,6 +58,15 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
 
+#定义默认角色
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['FLASKY_ADMIN']:
+                self.role = Role.query.filter_by(permissions=0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
@@ -35,10 +78,13 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+#确认用户账户
+    #生成一个令牌，有效期默认为一个小时
     def generate_confirmation_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'confirm': self.id})
-
+    #检验令牌，通过的化就把confirmed属性设为True,并检查令牌中的id是否和储存在current_user中的已登录的用户匹配
     def confirm(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
@@ -87,11 +133,26 @@ class User(UserMixin, db.Model):
         self.email = new_email
         db.session.add(self)
         return True
+    def can(self, permissions):
+        return self.role is not None and \
+            (self.role.permissions & permissions) == permissions
 
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+    
     def __repr__(self):
         return '<User %r>' % self.username
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+login_manager.anonymous_user = AnonymousUser
 
 
+#：加载用户的回调函数 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
