@@ -1,11 +1,12 @@
 from flask import render_template, redirect, url_for, abort, flash, request,\
-    current_app
+    current_app, make_response
 from flask_login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
 from ..models import Permission, Role, User, Post
-from ..decorators import admin_required
+from ..decorators import admin_required, permission_required
+
 
 #处理博客文章的首页路由
 #：显示所有博客文章或只显示所关注用户的文章 
