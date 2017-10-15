@@ -7,6 +7,7 @@ from flask_pagedown.fields import PageDownField
 from ..models import Role, User
 
 
+
 class NameForm(FlaskForm):
     name = StringField('What is your name?', validators=[Required()])
     submit = SubmitField('Submit')
@@ -51,4 +52,8 @@ class EditProfileAdminForm(FlaskForm):
 #博客文章表单
 class PostForm(FlaskForm):
     body = PageDownField("What's on your mind?", validators=[Required()])
+    submit = SubmitField('Submit')
+#评论输入表单
+class CommentForm(FlaskForm):
+    body = StringField('Enter your comment', validators=[Required()])
     submit = SubmitField('Submit')
